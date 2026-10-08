@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Игры У Лёши</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+  }
+
+  body {
+    background: #1a1a2e;
+    color: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Шапка */
+  header {
+    background: #16213e;
+    padding: 15px 30px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-size: 24px;
+    font-weight: bold;
+    background: linear-gradient(90deg, #ff3f6c, #ff8c42);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  nav {
+    display: flex;
+    gap: 20px;
+    margin-left: auto;
+  }
+
+  nav a {
+    color: #ccc;
+    text-decoration: none;
+    font-size: 15px;
+    transition: color 0.2s;
+  }
+
+  nav a:hover {
+    color: #ff3f6c;
+  }
+
+  /* Основной контент */
+  main {
+    flex: 1;
+    padding: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+    width: 100%;
+  }
+
+  .page-title {
+    font-size: 28px;
+    margin-bottom: 25px;
+    font-weight: 600;
+  }
+
+  /* Сетка игр */
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 20px;
+  }
+
+  .game-card {
+    background: #16213e;
+    border-radius: 16px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #0f3460;
+  }
+
+  .game-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(255, 63, 108, 0.2);
+    border-color: #ff3f6c;
+  }
+
+  .game-preview {
+    height: 160px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 60px;
+    position: relative;
+  }
+
+  .preview-ttt {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+  }
+
+  .preview-tanks {
+    background: linear-gradient(135deg, #f093fb, #f5576c);
+  }
+
+  .game-info {
+    padding: 15px;
+  }
+
+  .game-info h3 {
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+
+  .game-info p {
+    font-size: 13px;
+    color: #aaa;
+  }
+
+  /* Модальное окно игры */
+  .modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .modal.active {
+    display: flex;
+  }
+
+  .modal-content {
+    background: #16213e;
+    border-radius: 20px;
+    padding: 25px;
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    border: 1px solid #0f3460;
+  }
+
+  .modal-close {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #ff3f6c;
+    border: none;
+    color: #fff;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+
+  .modal-close:hover {
+    background: #ff5c82;
+  }
+
+  .modal h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 22px;
+  }
+
+  /* Крестики-нолики */
+  .ttt-board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    max-width: 320px;
+    margin: 0 auto 20px;
+  }
+
+  .ttt-cell {
+    aspect-ratio: 1;
+    background: #0f3460;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background 0.2s;
+    user-select: none;
+  }
+
+  .ttt-cell:hover {
+    background: #1a4a7a;
+  }
+
+  .ttt-cell.x {
+    color: #ff3f6c;
+  }
+
+  .ttt-cell.o {
+    color: #4fc3f7;
+  }
+
+  .ttt-status {
+    text-align: center;
+    font-size: 18px;
+    margin-bottom: 15px;
+    min-height: 26px;
+  }
+
+  .difficulty-switch {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 15px;
+  }
+
+  .difficulty-switch button {
+    padding: 8px 16px;
+    border: 1px solid #0f3460;
+    background: transparent;
+    color: #ccc;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+
+  .difficulty-switch button:hover {
+    border-color: #ff3f6c;
+    color: #fff;
+  }
+
+  .difficulty-switch button.active {
+    background: linear-gradient(90deg, #ff3f6c, #ff8c42);
+    color: #fff;
+    border-color: transparent;
+    font-weight: 600;
+  }
+
+  .btn {
+    display: block;
+    margin: 0 auto;
+    padding: 12px 30px;
+    background: linear-gradient(90deg, #ff3f6c, #ff8c42);
+    border: none;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .btn:hover {
+    opacity: 0.9;
+  }
+
+  /* Танки */
+  .tanks-canvas-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+  }
+
+  #tanksCanvas {
+    background: #0a0a1a;
+    border-radius: 12px;
+    max-width: 100%;
+    border: 2px solid #0f3460;
+  }
+
+  .tanks-info {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+    color: #ccc;
+  }
+
+  .tanks-info span {
+    font-weight: bold;
+    color: #ff3f6c;
+  }
+
+  .controls-hint {
+    text-align: center;
+    font-size: 13px;
+    color: #888;
+    line-height: 1.6;
+  }
+
+  .mobile-controls {
+    display: none;
+    grid-template-columns: repeat(3, 60px);
+    gap: 8px;
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  .mobile-controls button {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    border: none;
+    background: #0f3460;
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .mobile-controls button:active {
+    background: #1a4a7a;
+  }
+
+  @media (max-width: 600px) {
+    header { padding: 12px 15px; }
+    main { padding: 15px; }
+    .page-title { font-size: 22px; }
+    .mobile-controls { display: grid; }
+    .controls-hint { display: none; }
+  }
+
+  footer {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-size: 13px;
+    border-top: 1px solid #0f3460;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🎮 Игры У Лёши</div>
+  <nav>
+    <a href="#">Главная</a>
+    <a href="#">Мои игры</a>
+    <a href="#">Категории</a>
+  </nav>
+</header>
+
+<main>
+  <h1 class="page-title">Популярные игры</h1>
+  <div class="games-grid">
+    <div class="game-card" onclick="openGame('ttt')">
+      <div class="game-preview preview-ttt">❌⭕</div>
+      <div class="game-info">
+        <h3>Крестики-нолики</h3>
+        <p>Играй против бота</p>
+      </div>
+    </div>
+    <div class="game-card" onclick="openGame('tanks')">
+      <div class="game-preview preview-tanks">🚀🎯</div>
+      <div class="game-info">
+        <h3>Танки</h3>
+        <p>Аркадный танковый бой</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>© 2024 Игры У Лёши — Демо-платформа игр</footer>
+
+<!-- Модальное окно: Крестики-нолики -->
+<div class="modal" id="modal-ttt">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeGame('ttt')">✕</button>
+    <h2>Крестики-нолики с ботом</h2>
+    <div class="difficulty-switch" id="difficultySwitch">
+      <button data-level="easy">😊 Легко</button>
+      <button data-level="medium" class="active">🤔 Средне</button>
+      <button data-level="hard">😈 Сложно</button>
+    </div>
+    <div class="ttt-status" id="tttStatus">Твой ход: ❌</div>
+    <div class="ttt-board" id="tttBoard"></div>
+    <button class="btn" onclick="resetTTT()">Новая игра</button>
+  </div>
+</div>
+
+<!-- Модальное окно: Танки -->
+<div class="modal" id="modal-tanks">
+  <div class="modal-content">
+    <button class="modal-close" onclick="closeGame('tanks')">✕</button>
+    <h2>Танки</h2>
+    <div class="tanks-canvas-wrap">
+      <canvas id="tanksCanvas" width="500" height="400"></canvas>
+      <div class="tanks-info">
+        <div>Убито врагов: <span id="tanksScore">0</span></div>
+        <div>Жизни: <span id="tanksLives">3</span></div>
+      </div>
+      <div class="controls-hint">
+        WASD — движение · Пробел — выстрел<br>
+        (на мобильном — кнопки ниже)
+      </div>
+      <div class="mobile-controls">
+        <div></div>
+        <button data-key="w">▲</button>
+        <div></div>
+        <button data-key="a">◀</button>
+        <button data-key="s">▼</button>
+        <button data-key="d">▶</button>
+        <div></div>
+        <button data-key=" " style="grid-column: 2;">🔥</button>
+        <div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============ МОДАЛЬНЫЕ ОКНА ============ */
+function openGame(game) {
+  document.getElementById('modal-' + game).classList.add('active');
+  if (game === 'tanks') startTanks();
+  if (game === 'ttt') resetTTT();
+}
+function closeGame(game) {
+  document.getElementById('modal-' + game).classList.remove('active');
+  if (game === 'tanks') stopTanks();
+}
+
+document.querySelectorAll('.modal').forEach(m => {
+  m.addEventListener('click', e => {
+    if (e.target === m) {
+      const game = m.id.replace('modal-', '');
+      closeGame(game);
+    }
+  });
+});
+
+/* ============ КРЕСТИКИ-НОЛИКИ С БОТОМ ============ */
+const tttBoardEl = document.getElementById('tttBoard');
+const tttStatusEl = document.getElementById('tttStatus');
+
+let tttBoard, tttGameOver, tttBusy, tttDifficulty = 'medium';
+const HUMAN = 'X';
+const BOT = 'O';
+
+// Переключатель сложности
+document.querySelectorAll('#difficultySwitch button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#difficultySwitch button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    tttDifficulty = btn.dataset.level;
+    resetTTT();
+  });
+});
+
+function initTTT() {
+  tttBoard = ['', '', '', '', '', '', '', '', ''];
+  tttGameOver = false;
+  tttBusy = false;
+  renderTTT();
+  tttStatusEl.textContent = 'Твой ход: ❌';
+}
+
+function renderTTT() {
+  tttBoardEl.innerHTML = '';
+  tttBoard.forEach((val, i) => {
+    const cell = document.createElement('div');
+    cell.className = 'ttt-cell';
+    if (val === 'X') { cell.classList.add('x'); cell.textContent = '✕'; }
+    if (val === 'O') { cell.classList.add('o'); cell.textContent = '○'; }
+    cell.onclick = () => humanMove(i);
+    tttBoardEl.appendChild(cell);
+  });
+}
+
+function humanMove(i) {
+  if (tttGameOver || tttBusy || tttBoard[i] !== '') return;
+  tttBoard[i] = HUMAN;
+  renderTTT();
+
+  const winner = checkWinner();
+  if (winner) return finishGame(winner);
+
+  tttBusy = true;
+  tttStatusEl.textContent = 'Бот думает... 🤖';
+  setTimeout(() => {
+    botMove();
+    tttBusy = false;
+    const w2 = checkWinner();
+    if (w2) return finishGame(w2);
+    tttStatusEl.textContent = 'Твой ход: ❌';
+  }, 400 + Math.random() * 300);
+}
+
+function finishGame(winner) {
+  tttGameOver = true;
+  renderTTT();
+  if (winner === 'D') tttStatusEl.textContent = 'Ничья! 🤝';
+  else if (winner === HUMAN) tttStatusEl.textContent = 'Ты победил! 🎉';
+  else tttStatusEl.textContent = 'Бот победил! 🤖';
+}
+
+function checkWinner() {
+  const lines = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+  for (const [a,b,c] of lines) {
+    if (tttBoard[a] && tttBoard[a] === tttBoard[b] && tttBoard[a] === tttBoard[c]) {
+      return tttBoard[a];
+    }
+  }
+  return tttBoard.includes('') ? null : 'D';
+}
+
+function emptyCells() {
+  const res = [];
+  tttBoard.forEach((v, i) => { if (v === '') res.push(i); });
+  return res;
+}
+
+function botMove() {
+  const empty = emptyCells();
+  if (empty.length === 0) return;
+
+  let move;
+  const r = Math.random();
+
+  if (tttDifficulty === 'easy') {
+    // Легко: 70% случайный ход
+    move = r < 0.7 ? randomChoice(empty) : bestMove();
+  } else if (tttDifficulty === 'medium') {
+    // Средне: 50% случайный, 50% оптимальный
+    move = r < 0.5 ? randomChoice(empty) : bestMove();
+  } else {
+    // Сложно: всегда оптимальный
+    move = bestMove();
+  }
+
+  tttBoard[move] = BOT;
+  renderTTT();
+}
+
+function randomChoice(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function bestMove() {
+  // Minimax с альфа-бета отсечением — непобедимый бот
+  let bestScore = -Infinity;
+  let bestIdx = null;
+  const empty = emptyCells();
+
+  // Небольшая случайность при равных вариантах, чтобы не играть всегда одинаково
+  for (const i of empty) {
+    tttBoard[i] = BOT;
+    const score = minimax(tttBoard, 0, false, -Infinity, Infinity);
+    tttBoard[i] = '';
+    if (score > bestScore) {
+      bestScore = score;
+      bestIdx = i;
+    } else if (score === bestScore && Math.random() < 0.3) {
+      bestIdx = i;
+    }
+  }
+  return bestIdx;
+}
+
+function minimax(board, depth, isMax, alpha, beta) {
+  const w = checkWinnerOnBoard(board);
+  if (w === BOT) return 10 - depth;
+  if (w === HUMAN) return depth - 10;
+  if (w === 'D') return 0;
+
+  if (isMax) {
+    let best = -Infinity;
+    for (let i = 0; i < 9; i++) {
+      if (board[i] === '') {
+        board[i] = BOT;
+        best = Math.max(best, minimax(board, depth + 1, false, alpha, beta));
+        board[i] = '';
+        alpha = Math.max(alpha, best);
+        if (beta <= alpha) break;
+      }
+    }
+    return best;
+  } else {
+    let best = Infinity;
+    for (let i = 0; i < 9; i++) {
+      if (board[i] === '') {
+        board[i] = HUMAN;
+        best = Math.min(best, minimax(board, depth + 1, true, alpha, beta));
+        board[i] = '';
+        beta = Math.min(beta, best);
+        if (beta <= alpha) break;
+      }
+    }
+    return best;
+  }
+}
+
+function checkWinnerOnBoard(board) {
+  const lines = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+  for (const [a,b,c] of lines) {
+    if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+      return board[a];
+    }
+  }
+  return board.includes('') ? null : 'D';
+}
+
+function resetTTT() { initTTT(); }
+initTTT();
+
+/* ============ ТАНКИ ============ */
+const canvas = document.getElementById('tanksCanvas');
+const ctx = canvas.getContext('2d');
+const scoreEl = document.getElementById('tanksScore');
+const livesEl = document.getElementById('tanksLives');
+
+let tanksAnimId = null;
+let tanksRunning = false;
+
+let player, bullets, enemies, enemyBullets, particles;
+let score, lives, keys, spawnTimer, lastTime, gameOverState;
+
+const W = canvas.width;
+const H = canvas.height;
+
+function startTanks() {
+  if (tanksRunning) return;
+  tanksRunning = true;
+  gameOverState = false;
+
+  player = { x: W/2, y: H - 50, size: 28, angle: -Math.PI/2, speed: 2.5, cooldown: 0 };
+  bullets = [];
+  enemies = [];
+  enemyBullets = [];
+  particles = [];
+  score = 0;
+  lives = 3;
+  keys = {};
+  spawnTimer = 0;
+  lastTime = performance.now();
+
+  scoreEl.textContent = '0';
+  livesEl.textContent = '3';
+
+  window.addEventListener('keydown', tanksKeyDown);
+  window.addEventListener('keyup', tanksKeyUp);
+
+  tanksAnimId = requestAnimationFrame(tanksLoop);
+}
+
+function stopTanks() {
+  tanksRunning = false;
+  if (tanksAnimId) cancelAnimationFrame(tanksAnimId);
+  tanksAnimId = null;
+  window.removeEventListener('keydown', tanksKeyDown);
+  window.removeEventListener('keyup', tanksKeyUp);
+}
+
+function tanksKeyDown(e) {
+  keys[e.key.toLowerCase()] = true;
+  if (e.key === ' ') e.preventDefault();
+}
+function tanksKeyUp(e) {
+  keys[e.key.toLowerCase()] = false;
+}
+
+document.querySelectorAll('.mobile-controls button').forEach(btn => {
+  const key = btn.dataset.key;
+  const press = (e) => { e.preventDefault(); keys[key] = true; };
+  const release = (e) => { e.preventDefault(); keys[key] = false; };
+  btn.addEventListener('touchstart', press);
+  btn.addEventListener('touchend', release);
+  btn.addEventListener('mousedown', press);
+  btn.addEventListener('mouseup', release);
+  btn.addEventListener('mouseleave', release);
+});
+
+function tanksLoop(now) {
+  if (!tanksRunning) return;
+  const dt = Math.min((now - lastTime) / 16.67, 3);
+  lastTime = now;
+
+  if (!gameOverState) updateTanks(dt);
+  drawTanks();
+
+  tanksAnimId = requestAnimationFrame(tanksLoop);
+}
+
+function updateTanks(dt) {
+  let dx = 0, dy = 0;
+  if (keys['w'] || keys['ц']) dy -= 1;
+  if (keys['s'] || keys['ы']) dy += 1;
+  if (keys['a'] || keys['ф']) dx -= 1;
+  if (keys['d'] || keys['в']) dx += 1;
+
+  if (dx || dy) {
+    const len = Math.hypot(dx, dy);
+    player.x += (dx / len) * player.speed * dt;
+    player.y += (dy / len) * player.speed * dt;
+    player.angle = Math.atan2(dy, dx);
+    player.x = Math.max(player.size, Math.min(W - player.size, player.x));
+    player.y = Math.max(player.size, Math.min(H - player.size, player.y));
+  }
+
+  player.cooldown -= dt;
+  if ((keys[' '] || keys['fire']) && player.cooldown <= 0) {
+    player.cooldown = 18;
+    bullets.push({
+      x: player.x + Math.cos(player.angle) * player.size,
+      y: player.y + Math.sin(player.angle) * player.size,
+      vx: Math.cos(player.angle) * 7,
+      vy: Math.sin(player.angle) * 7,
+      r: 4
+    });
+    spawnParticles(player.x + Math.cos(player.angle) * player.size,
+                   player.y + Math.sin(player.angle) * player.size,
+                   '#ff8c42', 5);
+  }
+
+  bullets.forEach(b => { b.x += b.vx * dt; b.y += b.vy * dt; });
+  bullets = bullets.filter(b => b.x > -10 && b.x < W + 10 && b.y > -10 && b.y < H + 10);
+
+  spawnTimer -= dt;
+  if (spawnTimer <= 0) {
+    spawnTimer = 70 + Math.random() * 50;
+    const ex = 40 + Math.random() * (W - 80);
+    enemies.push({
+      x: ex, y: -30,
+      size: 26,
+      speed: 0.7 + Math.random() * 0.7,
+      hp: 1,
+      cooldown: 60 + Math.random() * 90,
+      angle: 0
+    });
+  }
+
+  enemies.forEach(e => {
+    e.y += e.speed * dt;
+    e.angle = Math.PI / 2;
+    e.cooldown -= dt;
+    if (e.cooldown <= 0 && e.y > 0 && e.y < H - 100) {
+      e.cooldown = 100 + Math.random() * 60;
+      enemyBullets.push({
+        x: e.x, y: e.y + e.size,
+        vx: 0, vy: 4,
+        r: 4
+      });
+    }
+  });
+
+  enemyBullets.forEach(b => { b.x += b.vx * dt; b.y += b.vy * dt; });
+  enemyBullets = enemyBullets.filter(b => b.y < H + 20);
+
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    const b = bullets[i];
+    for (let j = enemies.length - 1; j >= 0; j--) {
+      const e = enemies[j];
+      if (Math.hypot(b.x - e.x, b.y - e.y) < e.size) {
+        bullets.splice(i, 1);
+        enemies.splice(j, 1);
+        score += 10;
+        scoreEl.textContent = score;
+        spawnParticles(e.x, e.y, '#ff3f6c', 15);
+        break;
+      }
+    }
+  }
+
+  for (let i = enemyBullets.length - 1; i >= 0; i--) {
+    const b = enemyBullets[i];
+    if (Math.hypot(b.x - player.x, b.y - player.y) < player.size) {
+      enemyBullets.splice(i, 1);
+      loseLife();
+    }
+  }
+
+  for (let i = enemies.length - 1; i >= 0; i--) {
+    const e = enemies[i];
+    if (Math.hypot(e.x - player.x, e.y - player.y) < e.size + player.size - 5) {
+      enemies.splice(i, 1);
+      loseLife();
+    } else if (e.y > H + 40) {
+      enemies.splice(i, 1);
+    }
+  }
+
+  particles.forEach(p => {
+    p.x += p.vx * dt;
+    p.y += p.vy * dt;
+    p.life -= dt;
+  });
+  particles = particles.filter(p => p.life > 0);
+}
+
+function loseLife() {
+  lives--;
+  livesEl.textContent = lives;
+  spawnParticles(player.x, player.y, '#ffcc00', 20);
+  if (lives <= 0) {
+    gameOverState = true;
+    setTimeout(() => {
+      if (tanksRunning) {
+        alert('Игра окончена! Ваш счёт: ' + score);
+        stopTanks();
+        closeGame('tanks');
+      }
+    }, 100);
+  }
+}
+
+function spawnParticles(x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    const a = Math.random() * Math.PI * 2;
+    const s = 1 + Math.random() * 3;
+    particles.push({
+      x, y,
+      vx: Math.cos(a) * s,
+      vy: Math.sin(a) * s,
+      life: 20 + Math.random() * 20,
+      color
+    });
+  }
+}
+
+function drawTanks() {
+  ctx.fillStyle = '#0a0a1a';
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.strokeStyle = 'rgba(79, 195, 247, 0.06)';
+  ctx.lineWidth = 1;
+  for (let x = 0; x < W; x += 40) {
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+  }
+  for (let y = 0; y < H; y += 40) {
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+
+  particles.forEach(p => {
+    ctx.globalAlpha = Math.max(0, p.life / 40);
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  enemies.forEach(e => {
+    drawTank(e.x, e.y, e.angle, '#ff3f6c', e.size);
+  });
+
+  if (!gameOverState) {
+    drawTank(player.x, player.y, player.angle, '#4fc3f7', player.size);
+  }
+
+  bullets.forEach(b => {
+    ctx.fillStyle = '#ffcc00';
+    ctx.shadowColor = '#ffcc00';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+  enemyBullets.forEach(b => {
+    ctx.fillStyle = '#ff3f6c';
+    ctx.shadowColor = '#ff3f6c';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+  });
+
+  if (gameOverState) {
+    ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 40px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('GAME OVER', W/2, H/2);
+    ctx.font = '20px Arial';
+    ctx.fillStyle = '#ff3f6c';
+    ctx.fillText('Счёт: ' + score, W/2, H/2 + 40);
+  }
+}
+
+function drawTank(x, y, angle, color, size) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(angle);
+
+  ctx.fillStyle = color;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 12;
+  ctx.beginPath();
+  ctx.rect(-size/2, -size/2, size, size);
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  ctx.fillStyle = '#0a0a1a';
+  ctx.fillRect(-size/4, -size/4, size/2, size/2);
+
+  ctx.fillStyle = color;
+  ctx.fillRect(size/2 - 4, -3, size/2 + 6, 6);
+
+  ctx.restore();
+}
+
+window.addEventListener('blur', () => {
+  if (tanksRunning) keys = {};
+});
+</script>
+
+</body>
+</html>
